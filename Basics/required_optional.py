@@ -21,14 +21,14 @@ print(Circle(radius=1))
 # Nullable fields:
 from typing import Union,Optional
 
-# below 3 options serves the same purpose of allowing null/None as value and they are optional with default vlaue as None.
+# below 3 options serves the same purpose of allowing null/None as value, but are not optional
 class Model(BaseModel):
     field_1: int | None
     field_2: Union[int, None]
     field_3: Optional[int]
 
 try: 
-    print(Model.__fields__)
+    print(Model.model_fields)
     m = Model(field_1=None,field_2=None,field_3=None)
     m = Model()
 except ValidationError as ex:

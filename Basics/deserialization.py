@@ -19,7 +19,7 @@ data = {
 # 1: 
 p = Person(**data)
 # 2: 
-p = Person.parse_obj(data)
+p = Person.model_validate(data)
 print(p)
 
 data_json = """
@@ -30,5 +30,5 @@ data_json = """
 }
 """
 
-p = Person.parse_raw(data_json)
+p = Person.model_validate_json(data_json)
 print(p)

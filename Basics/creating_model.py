@@ -12,10 +12,10 @@ class Person(BaseModel):
 p = Person(first_name='Chetan', last_name='Sonigra', age=25)
 
 print(p,p.age)
-print(p.__fields__)
-print(p.__fields_set__)     # to get set of fields provided by user/while creating instance.
+print(p.model_fields)
+print(p.model_fields_set)     # to get set of fields provided by user/while creating instance.
 print(p.display_name)
-print(p.schema_json(by_alias=False)) # json schema generation.
+print(p.model_json_schema(by_alias=False)) # json schema generation.
 
 
 try:
