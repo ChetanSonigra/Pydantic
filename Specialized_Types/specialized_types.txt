@@ -1,0 +1,7 @@
+PositiveInt
+conlist = constrained list - min and max length
+PastDate = datetime that must be in past
+HttpURL =  validates http/https url and provides special parsing methods
+EmailStr = validates an email
+
+and many more...
