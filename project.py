@@ -1,6 +1,7 @@
 from pydantic import BaseModel,ValidationError, ConfigDict, Field,field_serializer, UUID4
 from pydantic.alias_generators import to_camel
 from datetime import date
+from uuid import uuid4
 from enum import Enum
 
 class AutomobileType(Enum):
@@ -18,15 +19,15 @@ class Automobile(BaseModel):
                               validate_assignment=True,
                               alias_generator=to_camel)
     
-    id_: UUID4 | None = Field(alias='id', default=None)
+    id_: UUID4 = Field(alias='id',default_factory=uuid4)
     manufacturer: str
     series_name: str
     type_: AutomobileType = Field(alias="type")
     is_electric: bool = False
-    manufactured_date: date = Field(validation_alias="completionDate")
+    manufactured_date: date = Field(validation_alias="completionDate", ge=date(1980,1,1))
     base_msrp_usd: float = Field(validation_alias="msrpUSD",serialization_alias="baseMSRPUSD")
     vin: str
-    number_of_doors: int = Field(validation_alias="doors",default=4)
+    number_of_doors: int = Field(validation_alias="doors",default=4,ge=2,le=4,multiple_of=2)
     registration_country: str | None = None
     license_plate: str | None = None
 
