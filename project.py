@@ -1,4 +1,4 @@
-from pydantic import BaseModel,ValidationError, ConfigDict, Field,field_serializer
+from pydantic import BaseModel,ValidationError, ConfigDict, Field,field_serializer, UUID4
 from pydantic.alias_generators import to_camel
 from datetime import date
 from enum import Enum
@@ -17,7 +17,8 @@ class Automobile(BaseModel):
                               validate_default=True,
                               validate_assignment=True,
                               alias_generator=to_camel)
-
+    
+    id_: UUID4 | None = Field(alias='id', default=None)
     manufacturer: str
     series_name: str
     type_: AutomobileType = Field(alias="type")
@@ -35,23 +36,22 @@ class Automobile(BaseModel):
         return value
 
 
-data_json = '''
-{
+data = {
+    "id": "c4e60f4a-3c7f-4da5-9b3f-07aee50b23e7",
     "manufacturer": "BMW",
     "seriesName": "M4",
     "type": "Convertible",
-    "isElectric": false,
+    "isElectric": False,
     "completionDate": "2023-01-01",
-    "msrpUSD": 93300,
+    "msrpUSD": 93_300,
     "vin": "1234567890",
     "doors": 2,
     "registrationCountry": "France",
     "licensePlate": "AAA-BBB"
 }
-'''
 
 
-m = Automobile.model_validate_json(data_json)
+m = Automobile.model_validate(data)
 
 print(m.model_dump())
 print(m.model_dump(by_alias=True))
