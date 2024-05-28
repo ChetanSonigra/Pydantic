@@ -1,11 +1,13 @@
 from pydantic import BaseModel,ValidationError, ConfigDict, \
-                        Field,field_serializer, UUID4, field_validator, ValidationInfo, AfterValidator
+                        Field,field_serializer, UUID4, field_validator, \
+                        ValidationInfo, AfterValidator, computed_field
 from pydantic.alias_generators import to_camel
 from datetime import date
 from uuid import uuid4
 from enum import Enum
 from typing import Annotated, TypeVar
 from country_data import countries
+from functools import cached_property
 
 T = TypeVar('T')
 BoundedString = Annotated[str,Field(min_length=2, max_length=50)]
@@ -21,6 +23,9 @@ def lookup_country(name: str) -> tuple[str,str]:
                         )
         
 Country = Annotated[BoundedString,AfterValidator(lambda name:lookup_country(name)[0])]
+
+lookup_country_code = {name:code for name,code in countries.values()}
+
 
 class AutomobileType(Enum):
     sedan = 'Sedan'
@@ -38,18 +43,18 @@ class Automobile(BaseModel):
                               alias_generator=to_camel)
     
     id_: UUID4 = Field(alias='id',default_factory=uuid4)
-    manufacturer: BoundedString
-    series_name: BoundedString
+    manufacturer: BoundedString 
+    series_name: BoundedString 
     type_: AutomobileType = Field(alias="type")
-    is_electric: bool = False
-    manufactured_date: date = Field(validation_alias="completionDate", ge=date(1980,1,1))
-    base_msrp_usd: float = Field(validation_alias="msrpUSD",serialization_alias="baseMSRPUSD")
-    top_features: BoundedList[BoundedString] | None = None
-    vin: BoundedString
-    number_of_doors: int = Field(validation_alias="doors",default=4,ge=2,le=4,multiple_of=2)
-    registration_country: Country | None = None
-    registration_date: date | None = None
-    license_plate: BoundedString | None = None
+    is_electric: bool = Field(default=False, repr=False)
+    manufactured_date: date = Field(validation_alias="completionDate", ge=date(1980,1,1),repr=False)
+    base_msrp_usd: float = Field(validation_alias="msrpUSD",serialization_alias="baseMSRPUSD",repr=False)
+    top_features: BoundedList[BoundedString] | None = Field(default=None, repr=False)
+    vin: BoundedString = Field(repr=False)
+    number_of_doors: int = Field(validation_alias="doors",default=4,ge=2,le=4,multiple_of=2,repr=False)
+    registration_country: Country | None = Field(default=None, repr=False)
+    registration_date: date | None = Field(default=None, repr=False)
+    license_plate: BoundedString | None = Field(default=None, repr=False)
 
     @field_serializer("manufactured_date","registration_date",when_used='json-unless-none',)
     def manufactured_date_serializer(self,value):
@@ -65,6 +70,11 @@ class Automobile(BaseModel):
                 raise ValueError("Registration date can not be prior to manufactured date.")
         return dt
     
+    @computed_field(alias='registrationCountryCode',repr=False)
+    @cached_property
+    def registration_country_code(self) -> str:
+        return lookup_country_code[self.registration_country]
+
 
 data = {
     "id": "c4e60f4a-3c7f-4da5-9b3f-07aee50b23e7",
@@ -95,3 +105,4 @@ print(m)
 # print(m.model_dump(by_alias=True))
 # print(m.model_dump_json())
 print(m.model_dump_json(by_alias=True))
+print(m.registration_country_code)
