@@ -39,13 +39,23 @@ class AutomobileType(Enum):
     suv = 'SUV'
     truck = 'Truck'
 
-
-class Automobile(BaseModel):
+class CamelBaseModel(BaseModel):
     model_config = ConfigDict(extra='forbid',
-                              str_strip_whitespace=True,
-                              validate_default=True,
-                              validate_assignment=True,
-                              alias_generator=to_camel)
+                            str_strip_whitespace=True,
+                            validate_default=True,
+                            validate_assignment=True,
+                            alias_generator=to_camel)
+
+
+class RegistrationCountry(CamelBaseModel):
+    name: Country | None = Field(default=None)
+    @computed_field
+    @cached_property
+    def code3(self) -> str:
+        return lookup_country_code[self.name]
+
+
+class Automobile(CamelBaseModel):
     
     id_: UUID4 = Field(alias='id',default_factory=uuid4)
     manufacturer: BoundedString 
@@ -57,7 +67,7 @@ class Automobile(BaseModel):
     top_features: BoundedList[BoundedString] | None = Field(default=None, repr=False)
     vin: BoundedString = Field(repr=False)
     number_of_doors: int = Field(validation_alias="doors",default=4,ge=2,le=4,multiple_of=2,repr=False)
-    registration_country: Country | None = Field(default=None, repr=False)
+    registration_country: RegistrationCountry | None = Field(default=None, repr=False)
     registration_date: CustomDate | None = Field(default=None, repr=False)
     license_plate: BoundedString | None = Field(default=None, repr=False)
 
@@ -69,11 +79,6 @@ class Automobile(BaseModel):
             if dt<data['manufactured_date']:
                 raise ValueError("Registration date can not be prior to manufactured date.")
         return dt
-    
-    @computed_field(alias='registrationCountryCode',repr=False)
-    @cached_property
-    def registration_country_code(self) -> str:
-        return lookup_country_code[self.registration_country]
 
 
 data = {
@@ -87,22 +92,23 @@ data = {
     "topFeatures": ["6 cylinders", "all-wheel drive", "convertible"],
     "vin": "1234567890",
     "doors": 2,
-    "registrationCountry": "usa",
-    "registrationDate": "2023-01-01",
+    "registrationCountry": {"name": "us"},
+    "registrationDate": "2023-06-01",
     "licensePlate": "AAA-BBB"
 }
 
 
 try:
     m = Automobile.model_validate(data)
+    print(m)
+    print(m.model_dump_json(by_alias=True,indent=2))
 except ValidationError as ex:
     exception = ex.json(indent=2)
 
 
-print(m)
 
 # print(m.model_dump())
 # print(m.model_dump(by_alias=True))
 # print(m.model_dump_json())
-print(m.model_dump_json(by_alias=True))
-print(m.registration_country_code)
+
+# print(m.registration_country_code)
