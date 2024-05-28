@@ -1,6 +1,6 @@
 from pydantic import BaseModel,ValidationError, ConfigDict, \
                         Field,field_serializer, UUID4, field_validator, \
-                        ValidationInfo, AfterValidator, computed_field
+                        ValidationInfo, AfterValidator, computed_field, PlainSerializer
 from pydantic.alias_generators import to_camel
 from datetime import date
 from uuid import uuid4
@@ -21,8 +21,13 @@ def lookup_country(name: str) -> tuple[str,str]:
         raise ValueError("Unknown country. "
                          f"Country name must be one of {",".join(valid_countries)}"
                         )
+    
+def date_serializer(value):
+    value = value.strftime("%Y/%m/%d")
+    return value
         
 Country = Annotated[BoundedString,AfterValidator(lambda name:lookup_country(name)[0])]
+CustomDate = Annotated[date,PlainSerializer(date_serializer,when_used='json-unless-none')]
 
 lookup_country_code = {name:code for name,code in countries.values()}
 
@@ -47,20 +52,15 @@ class Automobile(BaseModel):
     series_name: BoundedString 
     type_: AutomobileType = Field(alias="type")
     is_electric: bool = Field(default=False, repr=False)
-    manufactured_date: date = Field(validation_alias="completionDate", ge=date(1980,1,1),repr=False)
+    manufactured_date: CustomDate = Field(validation_alias="completionDate", ge=date(1980,1,1),repr=False)
     base_msrp_usd: float = Field(validation_alias="msrpUSD",serialization_alias="baseMSRPUSD",repr=False)
     top_features: BoundedList[BoundedString] | None = Field(default=None, repr=False)
     vin: BoundedString = Field(repr=False)
     number_of_doors: int = Field(validation_alias="doors",default=4,ge=2,le=4,multiple_of=2,repr=False)
     registration_country: Country | None = Field(default=None, repr=False)
-    registration_date: date | None = Field(default=None, repr=False)
+    registration_date: CustomDate | None = Field(default=None, repr=False)
     license_plate: BoundedString | None = Field(default=None, repr=False)
 
-    @field_serializer("manufactured_date","registration_date",when_used='json-unless-none',)
-    def manufactured_date_serializer(self,value):
-        value = value.strftime("%Y/%m/%d")
-        return value
-    
     @field_validator('registration_date')
     @classmethod
     def registration_date_validator(cls,dt:date,info: ValidationInfo):
