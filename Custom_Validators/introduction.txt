@@ -1,0 +1,17 @@
+--> custom validator function is used to 
+    validate or/and transform field values.
+
+2 Types: 
+1. Before Validator (on raw data) 2. After Validator (after pydantic validation)
+
+--> One field can have multiplle custom validators and mixure of before and after validators.
+
+--> Ordering of custom validators is based on ordering of fucntions in class.
+bottom to up for before validators.
+up to bottom for after validators.
+
+--> How custom validators should indicate validation failure? 
+raise ValueError
+assertion - python can be executed with a flag to turn off all assertion.
+PydanticCustomError = rarely used.
+
