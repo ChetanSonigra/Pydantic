@@ -1,0 +1,9 @@
+Applications:
+
+1. query a REST API and Model Response
+2. using a pydantic model when loading a csv file.
+3. validating python function argument using pydantic
+
+
+--> Auto-generating pydantic models using model generators.
+use python module - pip install datamodel-code-generator
