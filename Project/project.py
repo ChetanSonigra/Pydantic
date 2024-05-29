@@ -1,50 +1,13 @@
-from pydantic import BaseModel,ValidationError, ConfigDict, \
-                        Field,field_serializer, UUID4, field_validator, \
-                        ValidationInfo, AfterValidator, computed_field, PlainSerializer
+from pydantic import ValidationError, Field, UUID4, field_validator, \
+                        ValidationInfo, computed_field
 from pydantic.alias_generators import to_camel
 from datetime import date
 from uuid import uuid4
-from enum import Enum
-from typing import Annotated, TypeVar
-from country_data import countries
 from functools import cached_property
-
-T = TypeVar('T')
-BoundedString = Annotated[str,Field(min_length=2, max_length=50)]
-BoundedList = Annotated[list[T],Field(min_length=1, max_length=5)]
-valid_countries = [x for x in countries]
-
-def lookup_country(name: str) -> tuple[str,str]:
-    try:
-        return countries[name]
-    except KeyError:
-        raise ValueError("Unknown country. "
-                         f"Country name must be one of {",".join(valid_countries)}"
-                        )
-    
-def date_serializer(value):
-    value = value.strftime("%Y/%m/%d")
-    return value
-        
-Country = Annotated[BoundedString,AfterValidator(lambda name:lookup_country(name)[0])]
-CustomDate = Annotated[date,PlainSerializer(date_serializer,when_used='json-unless-none')]
-
-lookup_country_code = {name:code for name,code in countries.values()}
-
-
-class AutomobileType(Enum):
-    sedan = 'Sedan'
-    coupe = 'Coupe'
-    convertible = 'Convertible'
-    suv = 'SUV'
-    truck = 'Truck'
-
-class CamelBaseModel(BaseModel):
-    model_config = ConfigDict(extra='forbid',
-                            str_strip_whitespace=True,
-                            validate_default=True,
-                            validate_assignment=True,
-                            alias_generator=to_camel)
+from helper_functions import lookup_country_code
+from annotated_type import Country, BoundedString, BoundedList, CustomDate
+from basemodel_config import CamelBaseModel
+from enum_types import AutomobileType
 
 
 class RegistrationCountry(CamelBaseModel):
